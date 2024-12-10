@@ -14,7 +14,7 @@ import lang::json::IO;
 int main(int testArgument=0) {
     println("argument: <testArgument>");
 
-    loc testJavaProject = |cwd://javaTestProject|;
+    loc testJavaProject = |cwd://javaTestProject|; // |cwd://smallsql|;
     list[Declaration]  asts = getASTs(testJavaProject);
 
     for (ast <- asts) {
@@ -56,26 +56,16 @@ void findClones(list[Declaration] ast) {
                 }
              }
         }
-        int c = 0;
-        println(toJSON(subtrees));
-        writeJSON(|file:///home/jan/Nextcloud/uni/SEvolution/series2-Jan/src/testJsonExport.json|, subtrees, bool unpackedLocations=true);
 
+        println("Amount of classes");
+        println(size(subtrees));
+        list[list[node]] cloneClasses = [];
 
-
-
-
-
-
-        println("Amount of clone classes");
-        println(size(subtrees)); // struggling with range because it returns a set. goal is = lsit of lists of clones
-        list[node] emptyList = [];
-        list[list[node]] cloneClasses = [emptyList];
-        for (class <- subtrees) {
+        // GET ACTUAL CLONE CLASSES (>1)
+        for (class <- range(subtrees)) {
+            println(size(class));
             if (size(class) > 1) {
-                println(class);
                 cloneClasses += [class];
-                println("Clone class with size:");
-                println(size(class));
                 for (clone <- class) {
                     try
                         println(getLoc(clone));
@@ -84,17 +74,9 @@ void findClones(list[Declaration] ast) {
                 }
             }
         }
-        // println("size");
-        // println(size(subtrees));
-        // println("range");
-        // println(range(subtrees));
-        // println("domain");
-        // println(domain(subtrees));
-        // println("domain.size");
-        // println(size(domain(subtrees)));
         println("Amount of non-1 clone classes");
-        println(size(subtrees));
-         subtrees = removeSubClones(cloneClasses);
+        println(size(cloneClasses));
+        cloneClasses = removeSubClones(cloneClasses);
 }
 
 loc getLoc(node n) {
@@ -107,48 +89,55 @@ loc getLoc(node n) {
     
 }
 
-map[node, list[node]] removeSubClones(map[node, list[node]] subtrees) {
+list[list[node]] removeSubClones(list[list[node]] subtrees) {
     // implement removal of subtrees here
-    map[node, list[node]] cleanedSubtrees = ();
+    list[list[node]] toRemove = [];
     bool keepTrying = true;
 
 
-    for (cloneclassA <- range(subtrees)) {
-        keepTrying = true;
-        if (size(cloneclassA) <= 1) {
-            continue;
-        }
-        for (cloneClassB <- range(subtrees)){
-            keepTrying = true; // continue here playing around with this
-            if (size(cloneClassB) > 1) {
-                for (cloneA <- cloneclassA) {
-                    if (!keepTrying) {
-                            break;
-                        }
-                    for (cloneB <- cloneClassB) {
-                        if (!keepTrying) {
-                            break;
-                        }
-                        bool found = false;
-                        try
-                            found = isStrictlyContainedIn(getLoc(cloneA), getLoc(cloneB));
-                        catch:
-                            int x; // do do smt here
-                        if (found) {
-                            keepTrying = true;
-                            println("found a subclone set");
-                            println(getLoc(cloneA));
-                            println(getLoc(cloneB));
-                        }
-                        else {
-                            keepTrying = false;
-                        }
-                    }   // continue here
+    for (smallerClass <- subtrees) {
+        keepTrying = true; // new smallerClass so set to true
+        for (biggerClass <- subtrees){
+            keepTrying = true; // new biggerClass so set to true
+            bool isSubset = true;
+            for (cloneA <- smallerClass) {
+                bool found = false;
+                for (cloneB <- biggerClass) {
+                    try
+                        found = isStrictlyContainedIn(getLoc(cloneA), getLoc(cloneB));
+                    catch:
+                        ;
+                    if (found) {
+                        keepTrying = true;
+                        println("found a subclone set");
+                        println(getLoc(cloneA));
+                        println(getLoc(cloneB));
+                        break;
+                    }
+                } 
+                if (!found) {
+                    isSubset = false;
+                    break;
+                }
             }
-        }      
+            if (isSubset) {
+                println("FOllowing two classes are sub");
+                println(smallerClass);
+                println("biggerclass:");
+                println(biggerClass);
+
+                toRemove += [smallerClass];
+            }
+
+        }
     }
-    }
-    return cleanedSubtrees;
+    println("toRemove size");
+    println(size(toRemove));
+
+    subtrees = subtrees - toRemove;
+    println("final size");
+    println(size(subtrees));
+    return subtrees;
 }
 
     //domain -> keys
@@ -158,29 +147,3 @@ map[node, list[node]] removeSubClones(map[node, list[node]] subtrees) {
 
     // is hij in een van de vijf er in passend? 
   //   elke van a moet contained in een van de b zijn 
-
-  
-
-
-            //     int size = 1;
-            //     println("I am node type: ");
-            //     println(getName(n));
-            //     println("My children are:");
-            //     list[node] children = [child | node child <- getChildren(n)];
-            //     list[list[node]] listChildren = [child | list[node]]
-            //     for (child <- children ) {
-            //         println(getName(child));
-            //         //if (child.src ?) size += subtreeSizes[child.src];
-
-            //     }
-            //     //subtreeSizes[n.src] = size;
-
-
-            //     // println(arity(n));
-            //     // // only hash for non-leaves
-            //     // if (arity(n) != 0 && arity(n) > 5 ) {
-                    
-            //     //     if (n.typ ?) println(n.typ);
-            //     //     //myhash= hash(n.typ);
-            //     //     //runninghash = runninghash + myhash;
-            //    // }
