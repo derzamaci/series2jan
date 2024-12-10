@@ -16,27 +16,20 @@ public class Main  {
 
     public static int sum1(int x, int y) {
 
-            int x =           1;
-            System.out.println(x);
+            System.out.println(y);
 
             if (true) {
                 int x =           1;
                 System.out.println(x);
             }
-        
-
-
-
         return x + y;
     }
-
-
 
     public static int sum15(int z, int t) {
 
         if (true) {
             int x =           1;
-            System.out.println(y);
+            System.out.println(x);
         }
         return t + z;
     }
