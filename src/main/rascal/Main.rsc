@@ -58,9 +58,10 @@ void findClones(list[Declaration] ast) {
         }
         int c = 0;
         println(toJSON(subtrees));
-        writeJSON(|file:///home/jan/Nextcloud/uni/SEvolution/series2-Jan/src/testJsonExport.json|, subtrees, bool unpackedLocations=true);
-
-
+        println("Before json");
+        println(|cwd://testJsonExport.json|);
+        writeJSON(|file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/testJsonExport.json|, subtrees, unpackedLocations=true);
+        println("After json");
 
 
 
