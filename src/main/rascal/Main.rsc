@@ -58,6 +58,7 @@ void findClones(list[Declaration] ast) {
         }
         int c = 0;
         println(toJSON(subtrees));
+        writeJSON(|file:///home/jan/Nextcloud/uni/SEvolution/series2-Jan/src/testJsonExport.json|, subtrees, bool unpackedLocations=true);
 
 
 
@@ -70,7 +71,6 @@ void findClones(list[Declaration] ast) {
         list[node] emptyList = [];
         list[list[node]] cloneClasses = [emptyList];
         for (class <- subtrees) {
-            class = range(classA);
             if (size(class) > 1) {
                 println(class);
                 cloneClasses += [class];
