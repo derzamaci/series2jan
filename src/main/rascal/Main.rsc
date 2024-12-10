@@ -69,6 +69,8 @@ void findClones(list[Declaration] ast) {
         println(size(subtrees)); // struggling with range because it returns a set. goal is = lsit of lists of clones
         list[node] emptyList = [];
         list[list[node]] cloneClasses = [emptyList];
+        for (class <- subtrees) {
+            class = range(classA);
             if (size(class) > 1) {
                 println(class);
                 cloneClasses += [class];
