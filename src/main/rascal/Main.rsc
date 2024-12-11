@@ -10,16 +10,31 @@ import Node;
 import Map;
 import Location;
 import lang::json::IO;
+import Type;
 
 int main(int testArgument=0) {
     println("argument: <testArgument>");
 
-    loc testJavaProject = |cwd://javaTestProject|; // |cwd://smallsql|;
+    loc testJavaProject = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/rascalTestJava|; // |cwd://smallsql|;
     list[Declaration]  asts = getASTs(testJavaProject);
 
-    for (ast <- asts) {
-        findClones(asts);
-    } 
+    // list[list[node]] cloneClasses = findClones(asts);
+
+    loc cloneClassJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/cloneClassTest.json|;
+    loc locPerFileJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/locPerFileTest.json|;
+   
+    // exportToJson(cloneClasses, cloneClassJson);
+    exportLocPerFile(asts, locPerFileJson);
+    // list[list[str]] files = getRawLinesFromAST(asts);
+    // for (file <- files) {
+    //     println(size(file));
+    // }
+    // println(files[1][8]);
+    // println(files[1][9]);
+    // println(files[1][10]);
+    // println(files[1][11]);
+    // println(getRawLinesFromAST(asts));
+    // println(getCloneClassInfo(asts));
     return testArgument;
 }
 
@@ -31,9 +46,96 @@ list[Declaration] getASTs(loc projectLocation) {
     return asts;
 }
 
+// returns locations, lines of the file - this helps to get the actual lines of code of the clone
+map[loc, list[str]] getRawLinesFromAST(list[Declaration] asts) {
+    // Step 1: Extract useful lines per file from the AST
+    map[loc, set[int]] lines_map = ();
+    list[loc] locs = [];
+
+    visit (asts) {
+        case node n: 
+            if (n.src ?) {
+                locs += n.src;
+            }
+    }
+
+    for (myloc <- locs) {
+        int begin_line = myloc.begin.line;
+        int end_line = myloc.end.line;
+        loc key = myloc.top;
+        if (key notin lines_map) {
+            lines_map[key] = {begin_line, end_line};
+        } else {
+            lines_map[key] += {begin_line, end_line};
+        }
+    }
+
+    // Step 2: Read the content of each file and split it into lines
+    map[loc, list[str]] fileLinesMap = ();
+    set[loc] files = { k | k <- lines_map };
+    for (file <- files) {
+        list[str] codeLines = split("\n", readFile(file));
+        fileLinesMap[file] = codeLines;
+    }
+
+    return fileLinesMap;
+}
+
+map[loc, tuple[int, list[str]]] getCloneClassInfo(list[Declaration] asts) {
+    map[loc, list[str]] allLines = getRawLinesFromAST(asts);
+
+    map[loc, tuple[int, list[str]]] codeClassInfo = ();
+
+    for (loc key <- allLines) {
+        codeClassInfo[key] = <size(allLines[key]), allLines[key]>;
+    }
+
+    return codeClassInfo;
+}
+
+// Gets the amount of lines of code each file has and returens map with [locaition of file, number of lines]
+map[loc, int] getLinesPerFile(list[Declaration] asts) {
+    list[loc] locs = [];
+
+    visit (asts) {
+            case node n: if (n.src ?) locs += n.src;
+    }
+    // this creates a map of files, with for every file the lines which actually have code
+    map[loc, int] linesPerFile = ();
+    for (myloc <- locs) {
+        int endLine = myloc.end.line;
+        loc key = myloc.top;
+        linesPerFile[key] = endLine;
+    }
+
+    return linesPerFile;
+}
+
+// Writes LOC per file to json 
+void exportLocPerFile(list[Declaration] asts, loc path) {
+
+    // writeJSON(path, getLinesPerFile(asts), unpackedLocations=true);
+    writeJSON(path, getCloneClassInfo(asts), unpackedLocations=true);
+}
+
+// Writes clone class data to json
+void exportToJson(list[list[node]] cloneClasses, loc path) {
+    list[loc] nodeLoc = [];
+    for (nodeList <- cloneClasses) {
+        for (noddee <- nodeList) {
+            try
+                nodeLoc += [getLoc(noddee)];
+            catch:
+                break;
+        }
+    }
+    
+    writeJSON(path, nodeLoc, unpackedLocations=true);
+}
 
 
-void findClones(list[Declaration] ast) {
+
+list[list[node]] findClones(list[Declaration] ast) {
 
     map[node, list[node]] subtrees = ();
 
@@ -56,25 +158,17 @@ void findClones(list[Declaration] ast) {
                 }
              }
         }
-        int c = 0;
-        println(toJSON(subtrees));
-        println("Before json");
-        println(|cwd://testJsonExport.json|);
-        writeJSON(|file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/testJsonExport.json|, subtrees, unpackedLocations=true);
-        println("After json");
 
-
-
-
-
-        println("Amount of classes");
-        println(size(subtrees));
+        // println("Amount of classes");
+        // println(size(subtrees));
         list[list[node]] cloneClasses = [];
 
         // GET ACTUAL CLONE CLASSES (>1)
         for (class <- range(subtrees)) {
-            println(size(class));
+            // println(size(class));
             if (size(class) > 1) {
+                println("class:");
+                println(class);
                 cloneClasses += [class];
                 for (clone <- class) {
                     try
@@ -84,9 +178,12 @@ void findClones(list[Declaration] ast) {
                 }
             }
         }
-        println("Amount of non-1 clone classes");
-        println(size(cloneClasses));
+        // println("Amount of non-1 clone classes");
+        // println(size(cloneClasses));
         cloneClasses = removeSubClones(cloneClasses);
+        // println("CloneClass");
+        // println(cloneClasses);
+        return cloneClasses;
 }
 
 loc getLoc(node n) {
@@ -119,9 +216,9 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
                         ;
                     if (found) {
                         keepTrying = true;
-                        println("found a subclone set");
-                        println(getLoc(cloneA));
-                        println(getLoc(cloneB));
+                        // println("found a subclone set");
+                        // println(getLoc(cloneA));
+                        // println(getLoc(cloneB));
                         break;
                     }
                 } 
@@ -131,22 +228,22 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
                 }
             }
             if (isSubset) {
-                println("FOllowing two classes are sub");
-                println(smallerClass);
-                println("biggerclass:");
-                println(biggerClass);
+                // println("FOllowing two classes are sub");
+                // println(smallerClass);
+                // println("biggerclass:");
+                // println(biggerClass);
 
                 toRemove += [smallerClass];
             }
 
         }
     }
-    println("toRemove size");
-    println(size(toRemove));
+    // println("toRemove size");
+    // println(size(toRemove));
 
     subtrees = subtrees - toRemove;
-    println("final size");
-    println(size(subtrees));
+    // println("final size");
+    // println(size(subtrees));
     return subtrees;
 }
 
