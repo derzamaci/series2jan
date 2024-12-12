@@ -11,15 +11,19 @@ import Map;
 import Location;
 import lang::json::IO;
 
+
+
+// TODO
+// implement mass instead of arity
+// see how to make json clean for export
+
+
 int main(int testArgument=0) {
     println("argument: <testArgument>");
 
-    loc testJavaProject = |cwd://javaTestProject|; // |cwd://smallsql|;
+    loc testJavaProject = |cwd://smallsql|;// |cwd://javaTestProject|;  
     list[Declaration]  asts = getASTs(testJavaProject);
-
-    for (ast <- asts) {
-        findClones(asts);
-    } 
+    findClones(asts);
     return testArgument;
 }
 
@@ -45,7 +49,7 @@ void findClones(list[Declaration] ast) {
                 node unsetSubtree = unsetRec(n);
               //  println(unsetSubtree);
               // TODO check if subtree is above treshhold otherwise you just get ints etc -> in report: do quick analysis of this threshold and explain why I dont care about a too small numder
-                if(arity(unsetSubtree) > 1) { // play around with this to get granularity of clones
+                if(getSize(unsetSubtree) > 10) { // play around with this to get granularity of clones
                     if (unsetSubtree in subtrees) {
                     subtrees[unsetSubtree] += [n];
                 }
@@ -94,7 +98,6 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
     list[list[node]] toRemove = [];
     bool keepTrying = true;
 
-
     for (smallerClass <- subtrees) {
         keepTrying = true; // new smallerClass so set to true
         for (biggerClass <- subtrees){
@@ -109,9 +112,6 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
                         ;
                     if (found) {
                         keepTrying = true;
-                        println("found a subclone set");
-                        println(getLoc(cloneA));
-                        println(getLoc(cloneB));
                         break;
                     }
                 } 
@@ -121,29 +121,30 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
                 }
             }
             if (isSubset) {
-                println("FOllowing two classes are sub");
-                println(smallerClass);
-                println("biggerclass:");
-                println(biggerClass);
-
-                toRemove += [smallerClass];
+                subtrees -= [smallerClass];
             }
 
         }
+        c += 1;
     }
-    println("toRemove size");
-    println(size(toRemove));
 
-    subtrees = subtrees - toRemove;
-    println("final size");
+    println("Amount of clone classes after subsumption")
     println(size(subtrees));
     return subtrees;
 }
 
-    //domain -> keys
-    // range -> values 
-    // isstrictlycontained in 
-    // if every node in one class of the 
 
-    // is hij in een van de vijf er in passend? 
-  //   elke van a moet contained in een van de b zijn 
+int getSize(node n) {
+    int size = 0;
+    visit (n) {
+        case node n:
+            {
+                size += 1;
+            }
+    }
+    return size;
+}
+
+
+// threshold > 5, 1295 clones
+// thresholf > 9, 295
