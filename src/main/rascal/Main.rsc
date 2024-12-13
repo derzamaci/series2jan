@@ -24,7 +24,8 @@ int main(int testArgument=0) {
 
 
     loc testJavaProject = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/rascalTestJava|; // |cwd://smallsql|;
-    list[Declaration]  asts = getASTs(testJavaProject);
+    loc smallSQL = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/smallsql/smallsql0.21_src|;
+    list[Declaration]  asts = getASTs(smallSQL);
 
     list[list[node]] cloneClasses = findClones(asts);
 
