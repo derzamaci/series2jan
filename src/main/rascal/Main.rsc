@@ -134,7 +134,6 @@ void exportToJson(list[list[node]] cloneClasses, loc path) {
 }
 
 
-
 list[list[node]] findClones(list[Declaration] ast) {
 
     map[node, list[node]] subtrees = ();
@@ -159,13 +158,13 @@ list[list[node]] findClones(list[Declaration] ast) {
              }
         }
 
-        // println("Amount of classes");
-        // println(size(subtrees));
+        println("Amount of classes");
+        println(size(subtrees));
         list[list[node]] cloneClasses = [];
 
         // GET ACTUAL CLONE CLASSES (>1)
         for (class <- range(subtrees)) {
-            // println(size(class));
+            println(size(class));
             if (size(class) > 1) {
                 cloneClasses += [class];
                 for (clone <- class) {
@@ -176,7 +175,10 @@ list[list[node]] findClones(list[Declaration] ast) {
                 }
             }
         }
+        println("Amount of non-1 clone classes");
+        println(size(cloneClasses));
         cloneClasses = removeSubClones(cloneClasses);
+
         return cloneClasses;
 }
 
@@ -209,11 +211,6 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
                         ;
                     if (found) {
                         keepTrying = true;
-
-                        // println("found a subclone set");
-                        // println(getLoc(cloneA));
-                        // println(getLoc(cloneB));
-
                         break;
                     }
                 } 
@@ -227,11 +224,11 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
             }
 
         }
-        c += 1;
+        // c += 1;
     }
 
-    println("Amount of clone classes after subsumption")
-    println(size(subtrees));
+    // println("Amount of clone classes after subsumption")
+    // println(size(subtrees));
     return subtrees;
 }
 
