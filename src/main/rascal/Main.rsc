@@ -18,23 +18,14 @@ int main(int testArgument=0) {
     loc testJavaProject = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/rascalTestJava|; // |cwd://smallsql|;
     list[Declaration]  asts = getASTs(testJavaProject);
 
-    // list[list[node]] cloneClasses = findClones(asts);
+    list[list[node]] cloneClasses = findClones(asts);
 
     loc cloneClassJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/cloneClassTest.json|;
     loc locPerFileJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/locPerFileTest.json|;
    
-    // exportToJson(cloneClasses, cloneClassJson);
+    exportToJson(cloneClasses, cloneClassJson);
     exportLocPerFile(asts, locPerFileJson);
-    // list[list[str]] files = getRawLinesFromAST(asts);
-    // for (file <- files) {
-    //     println(size(file));
-    // }
-    // println(files[1][8]);
-    // println(files[1][9]);
-    // println(files[1][10]);
-    // println(files[1][11]);
-    // println(getRawLinesFromAST(asts));
-    // println(getCloneClassInfo(asts));
+
     return testArgument;
 }
 
@@ -167,8 +158,6 @@ list[list[node]] findClones(list[Declaration] ast) {
         for (class <- range(subtrees)) {
             // println(size(class));
             if (size(class) > 1) {
-                println("class:");
-                println(class);
                 cloneClasses += [class];
                 for (clone <- class) {
                     try
@@ -178,11 +167,7 @@ list[list[node]] findClones(list[Declaration] ast) {
                 }
             }
         }
-        // println("Amount of non-1 clone classes");
-        // println(size(cloneClasses));
         cloneClasses = removeSubClones(cloneClasses);
-        // println("CloneClass");
-        // println(cloneClasses);
         return cloneClasses;
 }
 
@@ -238,12 +223,7 @@ list[list[node]] removeSubClones(list[list[node]] subtrees) {
 
         }
     }
-    // println("toRemove size");
-    // println(size(toRemove));
-
     subtrees = subtrees - toRemove;
-    // println("final size");
-    // println(size(subtrees));
     return subtrees;
 }
 

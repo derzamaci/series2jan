@@ -2,6 +2,9 @@ public class Main  {
     public static void main(String[] args) {
         System.out.println("Hello, world!");
 
+        System.out.println("Hello, world!");
+        System.out.println("Hello, world!");
+
         sum1(7, 8);
         sum15(4, 3);
         
