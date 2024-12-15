@@ -30,8 +30,8 @@ int main(int testArgument=0) {
 
     list[list[node]] cloneClasses = findClones(asts);
 
-    loc cloneClassJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/cloneClassTest.json|;
-    loc locPerFileJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/locPerFileTest.json|;
+    loc cloneClassJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/smallSqlCloneClassTest.json|;
+    loc locPerFileJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/smallSqlLocPerFileTest.json|;
    
     exportToJson(cloneClasses, cloneClassJson);
     exportLocPerFile(asts, locPerFileJson);
