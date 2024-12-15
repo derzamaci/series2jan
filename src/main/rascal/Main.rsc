@@ -24,14 +24,14 @@ int main(int testArgument=0) {
 
 
     loc testJavaProject = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/rascalTestJava|; // |cwd://smallsql|;
-    loc smallSQL = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/smallsql/smallsql0.21_src|;
+    loc smallSQL = |file:///home/jan/Nextcloud/uni/SEvolution/series2-Jan/smallsql/smallsql0.21_src|;
     loc bigSQL = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/SQLbigProject/hsqldb-2.3.1|;
-    list[Declaration]  asts = getASTs(bigSQL);
+    list[Declaration]  asts = getASTs(smallSQL);
 
     list[list[node]] cloneClasses = findClones(asts);
 
-    loc cloneClassJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/cloneClassTest.json|;
-    loc locPerFileJson = |file://C:/Users/james/OneDrive/Desktop/SEseries/series2Rascal/series2jan/src/main/locPerFileTest.json|;
+    loc cloneClassJson = |file:///home/jan/Nextcloud/uni/SEvolution/series2_james/clone-visuals/src/outputFromRascal/cloneClassTest.json|;
+    loc locPerFileJson = |file:///home/jan/Nextcloud/uni/SEvolution/series2_james/clone-visuals/src/outputFromRascal/locPerFileTest.json|;
    
     exportToJson(cloneClasses, cloneClassJson);
     exportLocPerFile(asts, locPerFileJson);
@@ -76,12 +76,18 @@ map[loc, list[str]] getRawLinesFromAST(list[Declaration] asts) {
     set[loc] files = { k | k <- lines_map };
     for (file <- files) {
         list[str] codeLines = split("\n", readFile(file));
-        fileLinesMap[file] = codeLines;
+        list[str] newCodeLines = [];
+        for (line <- codeLines) {
+            line += "\n";
+            newCodeLines += line;
+        }
+        fileLinesMap[file] = newCodeLines;
     }
 
     return fileLinesMap;
 }
 
+// helper function for creating json
 map[loc, tuple[int, list[str]]] getCloneClassInfo(list[Declaration] asts) {
     map[loc, list[str]] allLines = getRawLinesFromAST(asts);
 
@@ -134,55 +140,44 @@ void exportToJson(list[list[node]] cloneClasses, loc path) {
     writeJSON(path, nodeLoc, unpackedLocations=true);
 }
 
-
+// Finds a list of clone classes given an AST
 list[list[node]] findClones(list[Declaration] ast) {
 
     map[node, list[node]] subtrees = ();
 
-  //  map[loc, int] subtreeSizes = (); // Store subtree sizes for reuse
-
        visit (ast) {
            case node n:
-             {
+            {
                 node unsetSubtree = unsetRec(n);
-              //  println(unsetSubtree);
-              // TODO check if subtree is above treshhold otherwise you just get ints etc -> in report: do quick analysis of this threshold and explain why I dont care about a too small numder
-                if(getSize(unsetSubtree) > 10) { // play around with this to get granularity of clones
+                if(getSize(unsetSubtree) > 15) { 
                     if (unsetSubtree in subtrees) {
-                    subtrees[unsetSubtree] += [n];
-                }
-                else {
-                    list[node] tmpList = [n];
-                    subtrees[unsetSubtree] = [n];
-                }
+                        subtrees[unsetSubtree] += [n];
+                    }
+                    else {
+                        list[node] tmpList = [n];
+                        subtrees[unsetSubtree] = [n];
+                    }
                 }
              }
         }
 
-        println("Amount of classes");
+        println("Different node types found:"); 
         println(size(subtrees));
         list[list[node]] cloneClasses = [];
 
         // GET ACTUAL CLONE CLASSES (>1)
         for (class <- range(subtrees)) {
-            println(size(class));
             if (size(class) > 1) {
                 cloneClasses += [class];
-                for (clone <- class) {
-                    try
-                        println(getLoc(clone));
-                    catch:
-                     break;
-                }
             }
         }
-        println("Amount of non-1 clone classes");
+        println("Amount of non-1 clone classes found:");
         println(size(cloneClasses));
-        cloneClasses = removeSubClones(cloneClasses);
 
-        return cloneClasses;
+        return removeSubClones(cloneClasses);;
 }
 
+// Returns the loc of a node if it has one
 loc getLoc(node n) {
     switch (n.src ) {
         case loc l:
@@ -193,47 +188,46 @@ loc getLoc(node n) {
     
 }
 
+// Given a list of clone classes this function removes all classes from that list that are contained in any of the other classes and returns it
 list[list[node]] removeSubClones(list[list[node]] subtrees) {
-    // implement removal of subtrees here
     list[list[node]] toRemove = [];
-    bool keepTrying = true;
 
     for (smallerClass <- subtrees) {
-        keepTrying = true; // new smallerClass so set to true
         for (biggerClass <- subtrees){
-            keepTrying = true; // new biggerClass so set to true
-            bool isSubset = true;
-            for (cloneA <- smallerClass) {
-                bool found = false;
-                for (cloneB <- biggerClass) {
-                    try
-                        found = isStrictlyContainedIn(getLoc(cloneA), getLoc(cloneB));
-                    catch:
-                        ;
-                    if (found) {
-                        keepTrying = true;
-                        break;
-                    }
-                } 
-                if (!found) {
-                    isSubset = false;
-                    break;
-                }
-            }
-            if (isSubset) {
+            if (isSubsumedIn(smallerClass, biggerClass)) {
                 subtrees -= [smallerClass];
             }
 
         }
-        // c += 1;
     }
-
-    // println("Amount of clone classes after subsumption")
-    // println(size(subtrees));
+    println("Amount of clone classes after subsumption:");
+    println(size(subtrees));
     return subtrees;
 }
 
+// Given two clone classes this function checks whether one is contained in the other
+bool isSubsumedIn(list[node] smallerClass, biggerClass) {
+    bool isSubset = true;
+    for (cloneA <- smallerClass) {
+        bool found = false;
+        for (cloneB <- biggerClass) {
+            try
+                found = isStrictlyContainedIn(getLoc(cloneA), getLoc(cloneB));
+            catch:
+                ;
+            if (found) {
+                break;
+            }
+        } 
+        if (!found) {
+            isSubset = false;
+            break;
+        }
+    }
+    return isSubset;
+}
 
+// This function returns the mass of a node
 int getSize(node n) {
     int size = 0;
     visit (n) {
@@ -244,7 +238,3 @@ int getSize(node n) {
     }
     return size;
 }
-
-
-// threshold > 5, 1295 clones
-// thresholf > 9, 295
