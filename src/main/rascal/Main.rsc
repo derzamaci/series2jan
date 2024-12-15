@@ -149,7 +149,7 @@ list[list[node]] findClones(list[Declaration] ast) {
            case node n:
             {
                 node unsetSubtree = unsetRec(n);
-                if(getSize(unsetSubtree) > 15) { 
+                if(getSize(unsetSubtree) > 15) {  // THRESHOLD PARAMETER
                     if (unsetSubtree in subtrees) {
                         subtrees[unsetSubtree] += [n];
                     }
